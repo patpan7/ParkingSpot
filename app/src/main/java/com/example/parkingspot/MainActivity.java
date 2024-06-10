@@ -182,18 +182,22 @@ public class MainActivity extends AppCompatActivity {
         String dateTime = new SimpleDateFormat("dd-MM-yyyy HH:mm").format(new Date());
 
         // Υπολογισμός κεντραρισμένου κειμένου
-        String centeredData = centerText(data, lineLength)+"\n\n\n\n";
-        String centeredUser = "\n"+centerText(username,lineLength)+"\n\n";
+//        String centeredData = centerText(data, lineLength)+"\n\n\n\n";
+//        String centeredUser = "\n"+centerText(username,lineLength)+"\n\n";
+//        String centeredDateTime = dateTime+"\n\n\n\n\n\n\n";
+        String centeredData = data + "\n\n\n\n";
+        String centeredUser = "\n" + username + "\n\n\n\n";
         String centeredDateTime = dateTime+"\n\n\n\n\n\n\n";
 
         // Εντολή για ρύθμιση μεγέθους γραμματοσειράς (διπλάσιο μέγεθος)
-        byte[] setSizeCmd = new byte[]{0x1B, 0x21, 0x32};
+        byte[] setSizeCmd = new byte[]{0x1D, 0x21, 0x22};
         outputStream.write(setSizeCmd);
-
+        byte[] setAlignCmd = new byte[]{0x1B, 0x61, 0x01};
+        outputStream.write(setAlignCmd);
         // Εκτύπωση δεδομένων
         outputStream.write(centeredUser.getBytes("UTF-8"));
         outputStream.write(centeredData.getBytes("UTF-8"));
-        byte[] setSizeCmd2 = new byte[]{0x1B, 0x21, 0x20};
+        byte[] setSizeCmd2 = new byte[]{0x1D, 0x21, 0x11};
         outputStream.write(setSizeCmd2);
         outputStream.write(centeredDateTime.getBytes("UTF-8"));
 
