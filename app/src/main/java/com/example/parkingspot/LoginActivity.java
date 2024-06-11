@@ -15,6 +15,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Properties;
 
 public class LoginActivity extends AppCompatActivity {
@@ -34,6 +37,25 @@ public class LoginActivity extends AppCompatActivity {
         passwordEditText = findViewById(R.id.passwordEditText);
         loginButton = findViewById(R.id.loginButton);
 
+        loadProperties();
+
+        // Έλεγχος ημερομηνίας λήξης
+        String expiryDateStr = properties.getProperty("expiry_date");
+        if (expiryDateStr != null) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            try {
+                Date expiryDate = dateFormat.parse(expiryDateStr);
+                Date currentDate = new Date();
+
+                if (currentDate.after(expiryDate)) {
+                    Toast.makeText(this, "Η εφαρμογή έχει λήξει. Παρακαλώ επικοινωνήστε με τον διαχειριστή.", Toast.LENGTH_LONG).show();
+                    loginButton.setEnabled(false); // Απενεργοποίηση του κουμπιού εισόδου
+                    return; // Τερματισμός της onCreate αν η εφαρμογή έχει λήξει
+                }
+            } catch (ParseException e) {
+                Log.e("DateParse", "Σφάλμα κατά την ανάλυση της ημερομηνίας λήξης", e);
+            }
+        }
 
 
         loginButton.setOnClickListener(new View.OnClickListener() {
