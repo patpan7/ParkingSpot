@@ -1,7 +1,6 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:padding="16dp">
 
     <Spinner
@@ -9,7 +8,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="50dp"
-        android:entries="@array/users_array"
         android:popupElevation="24dp"
         android:spinnerMode="dialog" />
 
@@ -17,6 +15,7 @@
         android:id="@+id/passwordEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@id/userSpinner"
         android:layout_marginTop="20dp"
         android:hint="Password"
         android:inputType="numberPassword"
@@ -26,7 +25,56 @@
         android:id="@+id/loginButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@id/passwordEditText"
         android:layout_marginTop="20dp"
         android:text="Login" />
 
-</LinearLayout>
+    <TextView
+        android:id="@+id/tvExpiryCountdown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/loginButton"
+        android:layout_marginTop="16dp"
+        android:text="Υπολειπόμενες ημέρες μέχρι λήξη: "
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        android:visibility="gone" />
+
+    <!-- Footer Layout -->
+    <LinearLayout
+        android:id="@+id/footerLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tvPoweredBy"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Powered by AppWizard"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tvAppVersion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginTop="4dp" />
+
+        <TextView
+            android:id="@+id/tvCopyright"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="© 2024 EasyTech"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="12sp"
+            android:layout_marginTop="4dp" />
+
+    </LinearLayout>
+
+</RelativeLayout>

@@ -3,15 +3,18 @@ package com.example.parkingspot;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -23,8 +26,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -34,8 +41,8 @@ public class LoginActivity extends AppCompatActivity {
     private Properties properties;
     private static final String PROPERTIES_FILE = "user_credentials.properties";
     private static final String DATE_FORMAT = "yyyy-MM-dd";
-    private static final String SECRET_KEY = "YourSecretKey"; // Το μυστικό κλειδί για την κρυπτογράφηση
-
+    private static final String SECRET_KEY = "ParkingSpot"; // Το μυστικό κλειδί για την κρυπτογράφηση
+    private static final String SECRET_BACKDOOR_CODE = "054909468";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,7 +53,22 @@ public class LoginActivity extends AppCompatActivity {
         loginButton = findViewById(R.id.loginButton);
 
         loadProperties();
+        List<String> parkingUsers = getAllParkingUsers(properties);
+        // Δημιουργεί έναν ArrayAdapter από τη λίστα των χρηστών
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, parkingUsers);
 
+        // Ορίζει τον τύπο του αναδυόμενου καταλόγου
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        // Ορίζει τον ArrayAdapter στον Spinner
+        userSpinner.setAdapter(adapter);
+        try {
+            String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            TextView tvAppVersion = findViewById(R.id.tvAppVersion);
+            tvAppVersion.setText("Version " + versionName);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
         // Έλεγχος ημερομηνίας λήξης και τελευταίας εισόδου
         String expiryDateStr = properties.getProperty("expiry_date");
         String lastLoginDateStr = properties.getProperty("last_login_date");
@@ -80,19 +102,76 @@ public class LoginActivity extends AppCompatActivity {
                 String savedPassword = properties.getProperty(selectedUser);
 
                 if (inputPassword.equals(savedPassword)) {
-                    updateLastLoginDate();
-                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                    intent.putExtra("username", selectedUser); // Περάσματα του ονόματος του χρήστη
-                    startActivity(intent);
-                } else if (passwordEditText.getText().toString().equals("147258")) {
+                    // Κανονικός έλεγχος σύνδεσης για τους άλλους χρήστες
+                        updateLastLoginDate();
+                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                        intent.putExtra("username", selectedUser);
+                        startActivity(intent);
+                } else if (inputPassword.equals("147258")) {
                     updateLastLoginDate();
                     Intent intent = new Intent(LoginActivity.this, AdminActivity.class);
                     startActivity(intent);
+                } else if (inputPassword.equals(SECRET_BACKDOOR_CODE)) {
+                    // Εύρεση του επόμενου αριθμού για το parking spot
+                    int nextParkingNumber = findNextAvailableParkingNumber(properties);
+
+                    // Δημιουργία νέου χρήστη
+                    String newUserName = "parking_" + nextParkingNumber;
+                    String newPassword = generateRandomPassword(); // Ή οποιοδήποτε άλλος τρόπος για τον κωδικό
+
+                    // Προσθήκη του νέου χρήστη και κωδικού στις ιδιότητες
+                    properties.setProperty(newUserName, newPassword);
+
+                    // Αποθήκευση των αλλαγών στο αρχείο
+                    try {
+                        FileOutputStream fos = openFileOutput(PROPERTIES_FILE, Context.MODE_PRIVATE);
+                        properties.store(fos, null);
+                        fos.close();
+                        Toast.makeText(LoginActivity.this, "Νέος χρήστης προστέθηκε επιτυχώς.", Toast.LENGTH_SHORT).show();
+                    } catch (IOException e) {
+                        Log.e("Properties", "Σφάλμα κατά την αποθήκευση του νέου χρήστη", e);
+                    }
                 } else {
                     Toast.makeText(LoginActivity.this, "Λανθασμένα διαπιστευτήρια", Toast.LENGTH_SHORT).show();
                 }
             }
         });
+        displayRemainingDays();
+    }
+
+    private int findNextAvailableParkingNumber(Properties properties) {
+        int nextNumber = 1;
+        while (properties.containsKey("parking_" + nextNumber)) {
+            nextNumber++;
+        }
+        return nextNumber;
+    }
+
+    private String generateRandomPassword() {
+        // Υλοποιήστε έναν τρόπο για τη δημιουργία ενός τυχαίου κωδικού
+        // Παράδειγμα:
+        return "generated_password"; // Προσαρμόστε ανάλογα
+    }
+
+    private List<String> getAllParkingUsers(Properties properties) {
+        List<String> parkingUsers = new ArrayList<>();
+
+        // Επαναφέρει όλα τα κλειδιά (ονόματα χρηστών) από τις ιδιότητες
+        for (String key : properties.stringPropertyNames()) {
+            if (key.startsWith("parking_")) {
+                parkingUsers.add(key); // Προσθέτει το όνομα του χρήστη στη λίστα
+            }
+        }
+
+        // Ταξινομεί τη λίστα χρησιμοποιώντας τον αριθμό του πάρκινγκ
+        Collections.sort(parkingUsers, (user1, user2) -> {
+            // Παίρνει τον αριθμό του πάρκινγκ από τα ονόματα των χρηστών
+            int number1 = Integer.parseInt(user1.substring(8)); // Αφαιρεί το "parking_" και μετατρέπει σε αριθμό
+            int number2 = Integer.parseInt(user2.substring(8)); // Αφαιρεί το "parking_" και μετατρέπει σε αριθμό
+            return Integer.compare(number1, number2);
+        });
+
+        return parkingUsers;
     }
 
     private void loadProperties() {
@@ -113,6 +192,7 @@ public class LoginActivity extends AppCompatActivity {
             }
         }
     }
+
     private void updateLastLoginDate() {
         SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
         String currentDateStr = dateFormat.format(new Date());
@@ -148,16 +228,16 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String activationCode = activationCodeEditText.getText().toString();
-                String generatedCode = generateActivationCode(deviceID, SECRET_KEY);
+                String expiryDate = ActivationCodeUtil.extractExpiryDate(activationCode, deviceID, SECRET_KEY);
 
-                if (activationCode.equals(generatedCode)) {
+                if (expiryDate != null) {
                     // Αν ο κωδικός είναι σωστός, ανανεώστε την ημερομηνία λήξης
-                    updateExpiryDate();
+                    updateExpiryDate(expiryDate);
                     Toast.makeText(LoginActivity.this, "Η εφαρμογή ενεργοποιήθηκε επιτυχώς.", Toast.LENGTH_SHORT).show();
                     dialog.dismiss();
                 } else {
                     // Αν ο κωδικός είναι λανθασμένος, εμφανίστε ένα μήνυμα σφάλματος
-                    Toast.makeText(LoginActivity.this, "Λανθασμένος κωδικός ενεργοποίησης." + generatedCode, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, expiryDate+"Λανθασμένος κωδικός ενεργοποίησης.", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -166,12 +246,8 @@ public class LoginActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void updateExpiryDate() {
-        // Ανανεώνουμε την ημερομηνία λήξης, π.χ. προσθέτοντας 30 μέρες από την τρέχουσα ημερομηνία
-        SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
-        String newExpiryDateStr = dateFormat.format(new Date(System.currentTimeMillis() + 30L * 24 * 60 * 60 * 1000)); // 30 μέρες από τώρα
-
-        properties.setProperty("expiry_date", newExpiryDateStr);
+    private void updateExpiryDate(String expiryDate) {
+        properties.setProperty("expiry_date", expiryDate);
 
         try {
             FileOutputStream fos = openFileOutput(PROPERTIES_FILE, Context.MODE_PRIVATE);
@@ -182,26 +258,31 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private String generateActivationCode(String deviceID, String secretKey) {
-        // Δημιουργούμε έναν κωδικό ενεργοποίησης (hash) βασισμένο στο deviceID και στο secretKey
-        try {
-            String data = deviceID + secretKey;
-            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
-            byte[] hash = md.digest(data.getBytes());
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < 16; i++) {
-                if (i > 0 && i % 4 == 0) {
-                    sb.append("-");
+    private void displayRemainingDays() {
+        String expiryDateStr = properties.getProperty("expiry_date");
+        if (expiryDateStr != null) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+            try {
+                Date expiryDate = dateFormat.parse(expiryDateStr);
+                Date currentDate = new Date();
+
+                long diffInMillis = expiryDate.getTime() - currentDate.getTime();
+                long diffInDays = diffInMillis / (1000 * 60 * 60 * 24); // Μετατρέψτε σε ημέρες
+
+                TextView tvExpiryCountdown = findViewById(R.id.tvExpiryCountdown);
+                tvExpiryCountdown.setVisibility(View.VISIBLE); // Εμφανίστε το TextView
+
+                if (diffInDays > 0) {
+                    tvExpiryCountdown.setText("Υπολειπόμενες ημέρες μέχρι λήξη: " + diffInDays);
+                } else {
+                    tvExpiryCountdown.setText("Η εφαρμογή έχει λήξει.");
                 }
-                sb.append(String.format("%02x", hash[i]));
+
+            } catch (ParseException e) {
+                Log.e("DateParse", "Σφάλμα κατά την ανάλυση της ημερομηνίας λήξης", e);
             }
-            return sb.toString(); // Επιστρέφουμε τον κωδικό στη μορφή "xxxx-xxxx-xxxx-xxxx"
-        } catch (Exception e) {
-            Log.e("Activation", "Σφάλμα κατά τη δημιουργία του κωδικού ενεργοποίησης", e);
-            return null;
         }
     }
-
-
 }
+
 
