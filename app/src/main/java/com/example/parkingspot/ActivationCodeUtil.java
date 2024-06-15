@@ -44,7 +44,7 @@ public class ActivationCodeUtil {
     }
 
     public static String extractExpiryDate(String activationCode, String deviceID, String secretKey) {
-        for (int i = 0; i < 365; i++) {
+        for (int i = 0; i < 740; i++) {
             String potentialDate = getDateAfterDays(i);
             String generatedCode = generateActivationCode(deviceID, potentialDate, secretKey);
 

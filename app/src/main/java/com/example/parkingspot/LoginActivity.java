@@ -53,15 +53,7 @@ public class LoginActivity extends AppCompatActivity {
         loginButton = findViewById(R.id.loginButton);
 
         loadProperties();
-        List<String> parkingUsers = getAllParkingUsers(properties);
-        // Δημιουργεί έναν ArrayAdapter από τη λίστα των χρηστών
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, parkingUsers);
-
-        // Ορίζει τον τύπο του αναδυόμενου καταλόγου
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-
-        // Ορίζει τον ArrayAdapter στον Spinner
-        userSpinner.setAdapter(adapter);
+        updateUserSpinner();
         try {
             String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
             TextView tvAppVersion = findViewById(R.id.tvAppVersion);
@@ -117,7 +109,7 @@ public class LoginActivity extends AppCompatActivity {
 
                     // Δημιουργία νέου χρήστη
                     String newUserName = "parking_" + nextParkingNumber;
-                    String newPassword = generateRandomPassword(); // Ή οποιοδήποτε άλλος τρόπος για τον κωδικό
+                    String newPassword = nextParkingNumber+""+nextParkingNumber+""; // Ή οποιοδήποτε άλλος τρόπος για τον κωδικό
 
                     // Προσθήκη του νέου χρήστη και κωδικού στις ιδιότητες
                     properties.setProperty(newUserName, newPassword);
@@ -128,6 +120,8 @@ public class LoginActivity extends AppCompatActivity {
                         properties.store(fos, null);
                         fos.close();
                         Toast.makeText(LoginActivity.this, "Νέος χρήστης προστέθηκε επιτυχώς.", Toast.LENGTH_SHORT).show();
+                        passwordEditText.setText("");
+                        updateUserSpinner();
                     } catch (IOException e) {
                         Log.e("Properties", "Σφάλμα κατά την αποθήκευση του νέου χρήστη", e);
                     }
@@ -138,6 +132,14 @@ public class LoginActivity extends AppCompatActivity {
         });
         displayRemainingDays();
     }
+
+    private void updateUserSpinner() {
+        List<String> parkingUsers = getAllParkingUsers(properties);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, parkingUsers);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        userSpinner.setAdapter(adapter);
+    }
+
 
     private int findNextAvailableParkingNumber(Properties properties) {
         int nextNumber = 1;
@@ -235,12 +237,21 @@ public class LoginActivity extends AppCompatActivity {
                     updateExpiryDate(expiryDate);
                     Toast.makeText(LoginActivity.this, "Η εφαρμογή ενεργοποιήθηκε επιτυχώς.", Toast.LENGTH_SHORT).show();
                     dialog.dismiss();
+
+                    // Κώδικας για επανεκκίνηση της εφαρμογής
+                    Intent intent = getBaseContext().getPackageManager()
+                            .getLaunchIntentForPackage(getBaseContext().getPackageName());
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent);
+                    finish(); // Κλείνει την τρέχουσα δραστηριότητα
+
                 } else {
                     // Αν ο κωδικός είναι λανθασμένος, εμφανίστε ένα μήνυμα σφάλματος
-                    Toast.makeText(LoginActivity.this, expiryDate+"Λανθασμένος κωδικός ενεργοποίησης.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, "Λανθασμένος κωδικός ενεργοποίησης.", Toast.LENGTH_SHORT).show();
                 }
             }
         });
+
 
         dialog.setCancelable(false);
         dialog.show();

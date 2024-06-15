@@ -4,14 +4,32 @@
     android:layout_marginTop="50dp"
     android:orientation="vertical"
     android:padding="16dp">
+    <!-- Προσθήκη TextView για τις οδηγίες -->
+    <TextView
+        android:id="@+id/textViewInstructions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ο αριθμός πινακίδας δέχεται μόνο αγγλικούς χαρακτήρες (A-Z) και νούμερα (0-9)."
+        android:textSize="16sp"
+        android:textColor="#FF0000"
+        android:layout_marginBottom="10dp"/>
 
+    <TextView
+        android:id="@+id/tvUsername"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:text="Parking"
+        android:textColor="#000000"
+        android:textAlignment="center"
+        android:textSize="34sp" />
     <EditText
         android:id="@+id/editText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="50dp"
         android:digits="ABEHIKMNOPTXYZ0123456789"
-        android:hint="Enter text here"
+        android:hint="Αριθμός πινακίδας"
         android:textSize="20sp"/>
 
     <Button
@@ -19,5 +37,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:text="Print" />
+        android:text="Εκτύπωση" />
+
+    <Button
+        android:id="@+id/changePrinterButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Επιλογή εκτυπωτή" />
 </LinearLayout>

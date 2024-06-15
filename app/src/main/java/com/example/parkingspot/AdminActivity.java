@@ -2,6 +2,7 @@ package com.example.parkingspot;
 
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -91,6 +92,14 @@ public class AdminActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        // Μετάβαση στο LoginActivity
+        Intent intent = new Intent(AdminActivity.this, LoginActivity.class);
+        startActivity(intent);
+        finish(); // Κλείσιμο του MainActivity για να αποτραπεί η επιστροφή με το back button
     }
 
         private int findNextAvailableParkingNumber(Properties properties) {
