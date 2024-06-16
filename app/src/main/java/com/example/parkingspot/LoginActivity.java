@@ -1,7 +1,6 @@
 package com.example.parkingspot;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
@@ -31,7 +30,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -90,7 +88,7 @@ public class LoginActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String selectedUser = userSpinner.getSelectedItem().toString().toLowerCase();
                 String inputPassword = passwordEditText.getText().toString();
-
+                loadProperties();
                 String savedPassword = properties.getProperty(selectedUser);
 
                 if (inputPassword.equals(savedPassword)) {
@@ -99,7 +97,7 @@ public class LoginActivity extends AppCompatActivity {
                         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                         intent.putExtra("username", selectedUser);
                         startActivity(intent);
-                } else if (inputPassword.equals("147258")) {
+                } else if (inputPassword.equals("147258369")) {
                     updateLastLoginDate();
                     Intent intent = new Intent(LoginActivity.this, AdminActivity.class);
                     startActivity(intent);
