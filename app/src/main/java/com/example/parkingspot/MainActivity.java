@@ -8,11 +8,17 @@ import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.inputmethodservice.Keyboard;
+import android.inputmethodservice.KeyboardView;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelUuid;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -45,6 +51,9 @@ public class MainActivity extends AppCompatActivity {
     private SharedPreferences sharedPreferences;
     String username;
 
+    private KeyboardView keyboardView;
+    private Keyboard keyboard;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
         username = intent.getStringExtra("username"); // Λήψη του ονόματος του χρήστη
         TextView tvUsername = findViewById(R.id.tvUsername);
         tvUsername.setText(username);
+        keyboardView = findViewById(R.id.keyboard_view);
         editText = findViewById(R.id.editText);
         printButton = findViewById(R.id.printButton);
         changePrinterButton = findViewById(R.id.changePrinterButton);
@@ -65,6 +75,93 @@ public class MainActivity extends AppCompatActivity {
         }
 
         sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+
+        keyboard = new Keyboard(this, R.xml.custom_keyboard);
+        keyboardView.setKeyboard(keyboard);
+        keyboardView.setOnKeyboardActionListener(new KeyboardView.OnKeyboardActionListener() {
+            @Override
+            public void onKey(int primaryCode, int[] keyCodes) {
+                if (primaryCode == -1) {
+                    // Backspace
+                    int length = editText.getText().length();
+                    if (length > 0) {
+                        editText.getText().delete(length - 1, length);
+                    }
+                } else if (primaryCode == 32) {
+                    // Space
+                    String text = editText.getText().toString();
+                    editText.setText(text+" ");
+
+                } else if (primaryCode == 45) {
+                    // Hyphen
+                    String text = editText.getText().toString();
+                    editText.setText(text+"-");
+                } else {
+                    // Add character
+                    editText.getText().append(Character.toString((char) primaryCode));
+                }
+            }
+            @Override
+            public void onPress(int primaryCode) {
+            }
+
+            @Override
+            public void onRelease(int primaryCode) {
+            }
+
+            @Override
+            public void onText(CharSequence text) {
+            }
+
+            @Override
+            public void swipeLeft() {
+            }
+
+            @Override
+            public void swipeRight() {
+            }
+
+            @Override
+            public void swipeDown() {
+            }
+
+            @Override
+            public void swipeUp() {
+            }
+        });
+
+        // Απόκρυψη του πληκτρολογίου του συστήματος και εμφάνιση του προσαρμοσμένου πληκτρολογίου
+        editText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) {
+                    hideSystemKeyboard();
+                    keyboardView.setVisibility(View.VISIBLE);
+                } else {
+                    keyboardView.setVisibility(View.GONE);
+                }
+            }
+        });
+
+        // Απόκρυψη του πληκτρολογίου του συστήματος όταν το EditText λαμβάνει εστίαση
+        editText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (!editText.hasFocus()) {
+                    keyboardView.setVisibility(View.GONE);
+                }
+            }
+        });
+        editText.setShowSoftInputOnFocus(false);
+        hideSystemKeyboard();
 
         printButton.setOnClickListener(new View.OnClickListener() {
             @SuppressLint("MissingPermission")
@@ -104,6 +201,15 @@ public class MainActivity extends AppCompatActivity {
         // Ζητάμε το δικαίωμα BLUETOOTH_CONNECT αν είμαστε σε Android 12 ή πιο πάνω
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             requestPermissions(new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 1);
+        }
+    }
+
+    // Μέθοδος για απόκρυψη του πληκτρολογίου του συστήματος
+    private void hideSystemKeyboard() {
+        this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.hideSoftInputFromWindow(editText.getWindowToken(), 0);
         }
     }
 

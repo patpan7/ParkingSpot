@@ -4,7 +4,7 @@
     android:layout_marginTop="50dp"
     android:orientation="vertical"
     android:padding="16dp">
-    <!-- Προσθήκη TextView για τις οδηγίες -->
+
     <TextView
         android:id="@+id/textViewInstructions"
         android:layout_width="match_parent"
@@ -23,6 +23,7 @@
         android:textColor="#000000"
         android:textAlignment="center"
         android:textSize="34sp" />
+
     <EditText
         android:id="@+id/editText"
         android:layout_width="match_parent"
@@ -30,7 +31,10 @@
         android:layout_marginTop="50dp"
         android:digits="ABEHIKMNOPTXYZ0123456789"
         android:hint="Αριθμός πινακίδας"
-        android:textSize="20sp"/>
+        android:textSize="20sp"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:inputType="none"/>
 
     <Button
         android:id="@+id/printButton"
@@ -45,4 +49,11 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:text="Επιλογή εκτυπωτή" />
+
+    <android.inputmethodservice.KeyboardView
+        android:id="@+id/keyboard_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:visibility="gone" />
 </LinearLayout>
