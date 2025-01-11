@@ -5,6 +5,13 @@
     android:orientation="vertical"
     android:padding="16dp">
 
+    <TextView
+        android:id="@+id/tvActivationMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Παρακαλώ εισάγετε τον κωδικό ενεργοποίησης για να ενημερώσετε την ημερομηνία λήξης."
+        android:textIsSelectable="true" />
+
     <EditText
         android:id="@+id/activationCodeEditText"
         android:layout_width="match_parent"

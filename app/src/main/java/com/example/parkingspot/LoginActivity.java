@@ -38,7 +38,7 @@ public class LoginActivity extends AppCompatActivity {
     private Button loginButton;
     private Properties properties;
     private static final String PROPERTIES_FILE = "user_credentials.properties";
-    private static final String DATE_FORMAT = "yyyy-MM-dd";
+    private static final String DATE_FORMAT = "dd-MM-yyyy";
     private static final String SECRET_KEY = "ParkingSpot"; // Το μυστικό κλειδί για την κρυπτογράφηση
     private static final String SECRET_BACKDOOR_CODE = "054909468";
     @Override
@@ -214,14 +214,14 @@ public class LoginActivity extends AppCompatActivity {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Η εφαρμογή έχει λήξει");
-        builder.setMessage("Device ID: " + deviceID + "\nΠαρακαλώ εισάγετε τον κωδικό ενεργοποίησης για να ενημερώσετε την ημερομηνία λήξης.");
+        String msg = ("Device ID: " + deviceID + "\nΠαρακαλώ εισάγετε τον κωδικό ενεργοποίησης για να ενημερώσετε την ημερομηνία λήξης.");
 
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_activation, null);
         builder.setView(dialogView);
-
+        TextView tvActivationMessage = dialogView.findViewById(R.id.tvActivationMessage);
         EditText activationCodeEditText = dialogView.findViewById(R.id.activationCodeEditText);
         Button activateButton = dialogView.findViewById(R.id.activateButton);
-
+        tvActivationMessage.setText(msg);
         AlertDialog dialog = builder.create();
 
         activateButton.setOnClickListener(new View.OnClickListener() {
@@ -276,7 +276,7 @@ public class LoginActivity extends AppCompatActivity {
                 Date currentDate = new Date();
 
                 long diffInMillis = expiryDate.getTime() - currentDate.getTime();
-                long diffInDays = diffInMillis / (1000 * 60 * 60 * 24); // Μετατρέψτε σε ημέρες
+                long diffInDays = diffInMillis / (1000 * 60 * 60 * 24)+1; // Μετατρέψτε σε ημέρες
 
                 TextView tvExpiryCountdown = findViewById(R.id.tvExpiryCountdown);
                 tvExpiryCountdown.setVisibility(View.VISIBLE); // Εμφανίστε το TextView

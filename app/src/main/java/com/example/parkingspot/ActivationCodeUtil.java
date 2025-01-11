@@ -1,20 +1,18 @@
 package com.example.parkingspot;
 
-import android.annotation.SuppressLint;
+import android.util.Base64;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Base64;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 public class ActivationCodeUtil {
 
-    private static final String DATE_FORMAT = "yyyy-MM-dd";
+    private static final String DATE_FORMAT = "dd-MM-yyyy";
 
     public static String generateActivationCode(String deviceId, String expiryDate, String appName) {
         try {
@@ -30,13 +28,16 @@ public class ActivationCodeUtil {
         }
     }
 
-    @SuppressLint("NewApi")
     private static String generateHMAC(String data, String key) throws Exception {
         Mac mac = Mac.getInstance("HmacSHA256");
         SecretKeySpec secretKeySpec = new SecretKeySpec(key.getBytes(), "HmacSHA256");
         mac.init(secretKeySpec);
         byte[] hmacBytes = mac.doFinal(data.getBytes());
-        return Base64.getEncoder().encodeToString(hmacBytes).replaceAll("[^A-Z0-9]", "").substring(0, 16);
+
+        // Χρήση Android Base64 και αφαίρεση ειδικών χαρακτήρων
+        return android.util.Base64.encodeToString(hmacBytes, Base64.NO_WRAP)
+                .replaceAll("[^A-Z0-9]", "")  // Αφαίρεση ειδικών χαρακτήρων
+                .substring(0, 16);  // Λήψη πρώτων 16 χαρακτήρων
     }
 
     private static String formatActivationCode(String code) {
@@ -56,8 +57,11 @@ public class ActivationCodeUtil {
     }
 
     private static String getDateAfterDays(int days) {
-        Date date = new Date(System.currentTimeMillis() + days * 24L * 60 * 60 * 1000);
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        calendar.add(Calendar.DAY_OF_YEAR, days);
+        Date date = calendar.getTime();
         SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         return dateFormat.format(date);
     }
 }
