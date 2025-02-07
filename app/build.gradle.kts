@@ -4,14 +4,14 @@ plugins {
 
 android {
     namespace = "com.example.parkingspot"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.parkingspot"
         minSdk = 23
         targetSdk = 33
         versionCode = 1
-        versionName = "1.2.1"
+        versionName = "1.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

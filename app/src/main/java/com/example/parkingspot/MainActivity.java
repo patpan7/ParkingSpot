@@ -279,25 +279,30 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void printData(String data) throws IOException {
-        // Μέγεθος γραμματοσειράς 48 χαρακτήρες ανά γραμμή
-        int lineLength = 48;
-
         // Λήψη τρέχουσας ημερομηνίας και ώρας
         String dateTime = new SimpleDateFormat("dd-MM-yyyy HH:mm").format(new Date());
 
-        // Υπολογισμός κεντραρισμένου κειμένου
-        String centeredData = data + "\n\n\n\n";
-        String centeredUser = "\n" + username + "\n\n\n\n";
+        // Προετοιμασία κειμένου
+        String centeredUser = "\n" + username + "\n\n";
+        String centeredData = data + "\n\n";
         String centeredDateTime = dateTime + "\n\n\n\n\n\n\n";
 
-        // Εντολή για ρύθμιση μεγέθους γραμματοσειράς (διπλάσιο μέγεθος)
+        // Μεγέθυνση γραμματοσειράς
         byte[] setSizeCmd = new byte[]{0x1D, 0x21, 0x22};
         outputStream.write(setSizeCmd);
+
+        // Κεντράρισμα κειμένου
         byte[] setAlignCmd = new byte[]{0x1B, 0x61, 0x01};
         outputStream.write(setAlignCmd);
-        // Εκτύπωση δεδομένων
+
+        // Εκτύπωση ονόματος χρήστη και δεδομένων
         outputStream.write(centeredUser.getBytes("UTF-8"));
         outputStream.write(centeredData.getBytes("UTF-8"));
+
+        // Εκτύπωση QR Code
+        printQRCode("https://www.mysite.com");
+
+        // Εκτύπωση ημερομηνίας σε κανονικό μέγεθος
         byte[] setSizeCmd2 = new byte[]{0x1D, 0x21, 0x11};
         outputStream.write(setSizeCmd2);
         outputStream.write(centeredDateTime.getBytes("UTF-8"));
@@ -306,8 +311,41 @@ public class MainActivity extends AppCompatActivity {
         byte[] resetSizeCmd = new byte[]{0x1B, 0x21, 0x00};
         outputStream.write(resetSizeCmd);
 
+
+
         // Κλείσιμο του stream και του socket
         outputStream.close();
         bluetoothSocket.close();
     }
+
+    // Μέθοδος για εκτύπωση QR Code
+    private void printQRCode(String qrData) throws IOException {
+        byte[] modelCommand = {0x1D, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41, 0x02, 0x00}; // Επιλογή QR Code
+        byte[] sizeCommand = {0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, 0x08}; // Μικρότερο QR για καλύτερη εκτύπωση
+        byte[] errorCorrection = {0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x34}; // Καλύτερη ανθεκτικότητα εκτύπωσης
+        byte[] densityCommand = {0x1D, 0x21, 0x11}; // Βελτίωση ποιότητας εκτύπωσης
+
+        byte[] storeCommand = new byte[]{0x1D, 0x28, 0x6B,
+                (byte) (qrData.length() + 3), 0x00,
+                0x31, 0x50, 0x30
+        };
+        byte[] printCommand = {0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30};
+
+        // Κεντράρισμα QR Code
+        byte[] setAlignCmd = new byte[]{0x1B, 0x61, 0x01};
+        outputStream.write(setAlignCmd);
+
+        outputStream.write(densityCommand); // Αυξάνει την ποιότητα εκτύπωσης
+        outputStream.write(modelCommand);
+        outputStream.write(sizeCommand);
+        outputStream.write(errorCorrection);
+        outputStream.write(storeCommand);
+        outputStream.write(qrData.getBytes("UTF-8"));
+        outputStream.write(printCommand);
+
+        // Πρόσθεσε περισσότερα κενά μετά το QR Code για καθαρότερη εκτύπωση
+        outputStream.write("\n\n\n".getBytes("UTF-8"));
+    }
+
+
 }
