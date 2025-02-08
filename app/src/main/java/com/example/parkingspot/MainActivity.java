@@ -312,7 +312,11 @@ public class MainActivity extends AppCompatActivity {
         outputStream.write(resetSizeCmd);
 
 
-
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         // Κλείσιμο του stream και του socket
         outputStream.close();
         bluetoothSocket.close();
