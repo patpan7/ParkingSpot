@@ -300,8 +300,7 @@ public class MainActivity extends AppCompatActivity {
         outputStream.write(centeredData.getBytes("UTF-8"));
 
         // Εκτύπωση QR Code
-        printQRCode("https://www.mysite.com");
-
+        printQRCode("https://parkingprivate.gr");
         // Εκτύπωση ημερομηνίας σε κανονικό μέγεθος
         byte[] setSizeCmd2 = new byte[]{0x1D, 0x21, 0x11};
         outputStream.write(setSizeCmd2);
