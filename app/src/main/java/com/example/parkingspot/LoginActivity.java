@@ -41,6 +41,7 @@ public class LoginActivity extends AppCompatActivity {
     private static final String DATE_FORMAT = "dd-MM-yyyy";
     private static final String SECRET_KEY = "ParkingSpot"; // Το μυστικό κλειδί για την κρυπτογράφηση
     private static final String SECRET_BACKDOOR_CODE = "054909468";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -90,13 +91,14 @@ public class LoginActivity extends AppCompatActivity {
                 String inputPassword = passwordEditText.getText().toString();
                 loadProperties();
                 String savedPassword = properties.getProperty(selectedUser);
+                //Log.e("SavedPassword", savedPassword);
 
                 if (inputPassword.equals(savedPassword)) {
                     // Κανονικός έλεγχος σύνδεσης για τους άλλους χρήστες
-                        updateLastLoginDate();
-                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                        intent.putExtra("username", selectedUser);
-                        startActivity(intent);
+                    updateLastLoginDate();
+                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                    intent.putExtra("username", selectedUser);
+                    startActivity(intent);
                 } else if (inputPassword.equals("147258369")) {
                     updateLastLoginDate();
                     Intent intent = new Intent(LoginActivity.this, AdminActivity.class);
@@ -107,7 +109,7 @@ public class LoginActivity extends AppCompatActivity {
 
                     // Δημιουργία νέου χρήστη
                     String newUserName = "parking_" + nextParkingNumber;
-                    String newPassword = nextParkingNumber+""+nextParkingNumber+""; // Ή οποιοδήποτε άλλος τρόπος για τον κωδικό
+                    String newPassword = nextParkingNumber + "" + nextParkingNumber + ""; // Ή οποιοδήποτε άλλος τρόπος για τον κωδικό
 
                     // Προσθήκη του νέου χρήστη και κωδικού στις ιδιότητες
                     properties.setProperty(newUserName, newPassword);
@@ -280,7 +282,7 @@ public class LoginActivity extends AppCompatActivity {
                 Date currentDate = new Date();
 
                 long diffInMillis = expiryDate.getTime() - currentDate.getTime();
-                long diffInDays = diffInMillis / (1000 * 60 * 60 * 24)+1; // Μετατρέψτε σε ημέρες
+                long diffInDays = diffInMillis / (1000 * 60 * 60 * 24) + 1; // Μετατρέψτε σε ημέρες
 
                 TextView tvExpiryCountdown = findViewById(R.id.tvExpiryCountdown);
                 tvExpiryCountdown.setVisibility(View.VISIBLE); // Εμφανίστε το TextView

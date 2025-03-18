@@ -24,6 +24,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -32,6 +33,7 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -50,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String PREF_KEY_MAC = "PrinterMAC";
     private SharedPreferences sharedPreferences;
     String username;
+    private DatabaseHelper databaseHelper;
+
 
     private KeyboardView keyboardView;
     private Keyboard keyboard;
@@ -60,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         Intent intent = getIntent();
-        username = intent.getStringExtra("username"); // Λήψη του ονόματος του χρήστη
+        username = intent.getStringExtra("username").toUpperCase(); // Λήψη του ονόματος του χρήστη
         TextView tvUsername = findViewById(R.id.tvUsername);
         tvUsername.setText(username);
         keyboardView = findViewById(R.id.keyboard_view);
@@ -90,17 +94,18 @@ public class MainActivity extends AppCompatActivity {
                 } else if (primaryCode == 32) {
                     // Space
                     String text = editText.getText().toString();
-                    editText.setText(text+" ");
+                    editText.setText(text + " ");
 
                 } else if (primaryCode == 45) {
                     // Hyphen
                     String text = editText.getText().toString();
-                    editText.setText(text+"-");
+                    editText.setText(text + "-");
                 } else {
                     // Add character
                     editText.getText().append(Character.toString((char) primaryCode));
                 }
             }
+
             @Override
             public void onPress(int primaryCode) {
             }
@@ -216,6 +221,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         // Μετάβαση στο LoginActivity
+        super.onBackPressed();
         Intent intent = new Intent(MainActivity.this, LoginActivity.class);
         startActivity(intent);
         finish(); // Κλείσιμο του MainActivity για να αποτραπεί η επιστροφή με το back button
@@ -280,12 +286,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void printData(String data) throws IOException {
         // Λήψη τρέχουσας ημερομηνίας και ώρας
-        String dateTime = new SimpleDateFormat("dd-MM-yyyy HH:mm").format(new Date());
-
+        String dateTime = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(new Date());
+        String printDateTime = new SimpleDateFormat("dd-MM-yyyy HH:mm").format(new Date());
         // Προετοιμασία κειμένου
         String centeredUser = "\n" + username + "\n\n";
         String centeredData = data + "\n\n";
-        String centeredDateTime = dateTime + "\n\n\n\n\n\n\n";
+        String centeredDateTime = printDateTime + "\n\n\n\n\n\n\n";
 
         // Μεγέθυνση γραμματοσειράς
         byte[] setSizeCmd = new byte[]{0x1D, 0x21, 0x22};
@@ -319,6 +325,11 @@ public class MainActivity extends AppCompatActivity {
         // Κλείσιμο του stream και του socket
         outputStream.close();
         bluetoothSocket.close();
+
+        // Αποθήκευση στην SQLite
+        databaseHelper = new DatabaseHelper(this);
+        databaseHelper.addTicket(username, data, dateTime);
+
     }
 
     // Μέθοδος για εκτύπωση QR Code
