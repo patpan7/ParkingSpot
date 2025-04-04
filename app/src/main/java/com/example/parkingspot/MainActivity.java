@@ -8,6 +8,8 @@ import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.os.Build;
@@ -28,11 +30,26 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.gson.Gson;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.MultiFormatWriter;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.mypos.smartsdk.Currency;
+import com.mypos.smartsdk.MyPOSAPI;
+import com.mypos.smartsdk.MyPOSPayment;
+import com.mypos.smartsdk.MyPOSUtil;
+import com.mypos.smartsdk.OnPOSInfoListener;
+import com.mypos.smartsdk.ReferenceType;
+import com.mypos.smartsdk.data.POSInfo;
+import com.mypos.smartsdk.print.PrinterCommand;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
@@ -57,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
 
     private KeyboardView keyboardView;
     private Keyboard keyboard;
+    private static final int PAYMENT_REQUEST_CODE = 1001; // Κωδικός για τη myPOS συναλλαγή
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -172,26 +190,39 @@ public class MainActivity extends AppCompatActivity {
             @SuppressLint("MissingPermission")
             @Override
             public void onClick(View v) {
-                if (!bluetoothAdapter.isEnabled()) {
-                    Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                    startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-                } else {
-                    String savedMAC = sharedPreferences.getString(PREF_KEY_MAC, null);
-                    if (savedMAC != null) {
-                        // Αν υπάρχει αποθηκευμένη συσκευή, συνδεόμαστε σε αυτήν
-                        bluetoothDevice = bluetoothAdapter.getRemoteDevice(savedMAC);
-                        try {
-                            openBluetoothPrinter();
-                            printData(editText.getText().toString());
-                        } catch (IOException e) {
-                            Log.e(TAG, "Error connecting to Bluetooth device", e);
-                            Toast.makeText(MainActivity.this, "Error connecting to Bluetooth device", Toast.LENGTH_LONG).show();
+                MyPOSAPI.registerPOSInfo(MainActivity.this, new OnPOSInfoListener() {
+                    @Override
+                    public void onReceive(POSInfo info) {
+                        if (info.getTID() != null && !info.getTID().isEmpty()) {
+                            startMyPOSPayment();
+                            // Είναι MyPOS -> Εκτυπώνουμε μέσω MyPOS API
+                            //printViaMyPOS(editText.getText().toString());
+                        } else {
+                            printViaBluetooth();
+//                            if (!bluetoothAdapter.isEnabled()) {
+//                                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+//                                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+//                            } else {
+//                                String savedMAC = sharedPreferences.getString(PREF_KEY_MAC, null);
+//                                if (savedMAC != null) {
+//                                    // Αν υπάρχει αποθηκευμένη συσκευή, συνδεόμαστε σε αυτήν
+//                                    bluetoothDevice = bluetoothAdapter.getRemoteDevice(savedMAC);
+//                                    try {
+//                                        openBluetoothPrinter();
+//                                        printData(editText.getText().toString());
+//                                    } catch (IOException e) {
+//                                        Log.e(TAG, "Error connecting to Bluetooth device", e);
+//                                        Toast.makeText(MainActivity.this, "Error connecting to Bluetooth device", Toast.LENGTH_LONG).show();
+//                                    }
+//                                } else {
+//                                    // Αν δεν υπάρχει αποθηκευμένη συσκευή, εμφανίζουμε τη λίστα
+//                                    selectBluetoothDevice();
+//                                }
+//                            }
                         }
-                    } else {
-                        // Αν δεν υπάρχει αποθηκευμένη συσκευή, εμφανίζουμε τη λίστα
-                        selectBluetoothDevice();
                     }
-                }
+                });
+
             }
         });
 
@@ -208,6 +239,61 @@ public class MainActivity extends AppCompatActivity {
             requestPermissions(new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 1);
         }
     }
+
+    // Μέθοδος για να ξεκινήσει η πληρωμή στο myPOS
+    private void startMyPOSPayment() {
+        MyPOSPayment payment = MyPOSPayment.builder()
+                // Mandatory parameters
+                .productAmount(0.10)
+                .currency(Currency.EUR)
+                // Foreign transaction ID. Maximum length: 128 characters
+                //.foreignTransactionId(UUID.randomUUID().toString())
+                // Optional parameters
+                // Enable tipping mode
+//                .tippingModeEnabled(true)
+//                .tipAmount(1.55)
+                // Operator code. Maximum length: 4 characters
+                .operatorCode("1234")
+                // Reference number. Maximum length: 50 alpha numeric characters
+                .reference("asd123asd", ReferenceType.REFERENCE_NUMBER)
+                // Enable fixed pinpad keyboard
+                .fixedPinpad(true)
+                // Enable mastercard and visa branding video
+                .mastercardSonicBranding(true)
+                .visaSensoryBranding(true)
+                // Set print receipt mode
+                .printMerchantReceipt(MyPOSUtil.RECEIPT_ON) // possible options RECEIPT_ON, RECEIPT_OFF
+                .printCustomerReceipt(MyPOSUtil.RECEIPT_ON) // possible options RECEIPT_ON, RECEIPT_OFF, RECEIPT_AFTER_CONFIRMATION, RECEIPT_E_RECEIPT
+                //set email or phone e-receipt receiver, works with customer receipt configuration RECEIPT_E_RECEIPT or RECEIPT_AFTER_CONFIRMATION
+                //.eReceiptReceiver("examplename@example.com")
+                .build();
+
+        MyPOSAPI.openPaymentActivity(MainActivity.this, payment, PAYMENT_REQUEST_CODE);
+    }
+
+
+    @SuppressLint("MissingPermission")
+    private void printViaBluetooth() {
+        if (!bluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+        } else {
+            String savedMAC = sharedPreferences.getString(PREF_KEY_MAC, null);
+            if (savedMAC != null) {
+                bluetoothDevice = bluetoothAdapter.getRemoteDevice(savedMAC);
+                try {
+                    openBluetoothPrinter();
+                    printData(editText.getText().toString());
+                } catch (IOException e) {
+                    Log.e(TAG, "Error connecting to Bluetooth device", e);
+                    Toast.makeText(MainActivity.this, "Error connecting to Bluetooth device", Toast.LENGTH_LONG).show();
+                }
+            } else {
+                selectBluetoothDevice();
+            }
+        }
+    }
+
 
     // Μέθοδος για απόκρυψη του πληκτρολογίου του συστήματος
     private void hideSystemKeyboard() {
@@ -230,6 +316,20 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PAYMENT_REQUEST_CODE) {
+            if (resultCode == RESULT_OK && data != null) {
+                boolean transactionApproved = data.getBooleanExtra("transaction_approved", false);
+
+                if (transactionApproved) {
+                    Toast.makeText(this, "Πληρωμή επιτυχής! Εκτύπωση...", Toast.LENGTH_SHORT).show();
+                    printViaMyPOS(editText.getText().toString()); // Εκτύπωση στο myPOS
+                } else {
+                    Toast.makeText(this, "Η πληρωμή απέτυχε!", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(this, "Η συναλλαγή ακυρώθηκε!", Toast.LENGTH_SHORT).show();
+            }
+        }
         if (requestCode == REQUEST_ENABLE_BT) {
             if (resultCode == RESULT_OK) {
                 selectBluetoothDevice();
@@ -360,6 +460,59 @@ public class MainActivity extends AppCompatActivity {
         // Πρόσθεσε περισσότερα κενά μετά το QR Code για καθαρότερη εκτύπωση
         outputStream.write("\n\n\n".getBytes("UTF-8"));
     }
+
+    private void printViaMyPOS(String data) {
+        List<PrinterCommand> commands = new ArrayList<>();
+
+        // Προσθήκη header με την ημερομηνία
+        String dateTime = new SimpleDateFormat("dd/MM/yy;HH:mm").format(new Date());
+        commands.add(new PrinterCommand(PrinterCommand.CommandType.HEADER, dateTime));
+
+        // Προσθήκη ονόματος χρήστη
+        commands.add(new PrinterCommand(PrinterCommand.CommandType.TEXT, "\n       " + username + "\n\n", true, true));
+
+        // Προσθήκη δεδομένων (μεγαλύτερη γραμματοσειρά)
+        commands.add(new PrinterCommand(PrinterCommand.CommandType.TEXT, "       "+data + "\n", true, true));
+
+        // Προσθήκη QR Code
+        Bitmap qrBitmap = generateQRCodeBitmap("https://parkingprivate.gr");
+        if (qrBitmap != null) {
+            commands.add(new PrinterCommand(PrinterCommand.CommandType.IMAGE, qrBitmap));
+        }
+
+        // Προσθήκη footer
+        commands.add(new PrinterCommand(PrinterCommand.CommandType.FOOTER));
+
+        // Μετατροπή σε JSON
+        Gson gson = new Gson();
+        String json = gson.toJson(commands);
+
+        // Αποστολή εκτύπωσης στο MyPOS
+        Intent intent = new Intent(MyPOSUtil.PRINT_BROADCAST);
+        intent.putExtra("commands", json);
+        MyPOSAPI.sendExplicitBroadcast(this, intent);
+    }
+
+    private Bitmap generateQRCodeBitmap(String text) {
+        try {
+            BitMatrix bitMatrix = new MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, 200, 200);
+            int width = bitMatrix.getWidth();
+            int height = bitMatrix.getHeight();
+            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    bitmap.setPixel(x, y, bitMatrix.get(x, y) ? Color.BLACK : Color.WHITE);
+                }
+            }
+            return bitmap;
+        } catch (WriterException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
 
 
 }
