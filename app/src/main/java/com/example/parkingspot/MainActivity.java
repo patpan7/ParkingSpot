@@ -5,16 +5,17 @@ import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ProviderInfo;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.ParcelUuid;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -39,9 +40,7 @@ import com.mypos.smartsdk.Currency;
 import com.mypos.smartsdk.MyPOSAPI;
 import com.mypos.smartsdk.MyPOSPayment;
 import com.mypos.smartsdk.MyPOSUtil;
-import com.mypos.smartsdk.OnPOSInfoListener;
 import com.mypos.smartsdk.ReferenceType;
-import com.mypos.smartsdk.data.POSInfo;
 import com.mypos.smartsdk.print.PrinterCommand;
 
 import java.io.IOException;
@@ -50,7 +49,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -190,38 +188,65 @@ public class MainActivity extends AppCompatActivity {
             @SuppressLint("MissingPermission")
             @Override
             public void onClick(View v) {
-                MyPOSAPI.registerPOSInfo(MainActivity.this, new OnPOSInfoListener() {
-                    @Override
-                    public void onReceive(POSInfo info) {
-                        if (info.getTID() != null && !info.getTID().isEmpty()) {
-                            startMyPOSPayment();
-                            // Είναι MyPOS -> Εκτυπώνουμε μέσω MyPOS API
-                            //printViaMyPOS(editText.getText().toString());
-                        } else {
-                            printViaBluetooth();
-//                            if (!bluetoothAdapter.isEnabled()) {
-//                                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-//                                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-//                            } else {
-//                                String savedMAC = sharedPreferences.getString(PREF_KEY_MAC, null);
-//                                if (savedMAC != null) {
-//                                    // Αν υπάρχει αποθηκευμένη συσκευή, συνδεόμαστε σε αυτήν
-//                                    bluetoothDevice = bluetoothAdapter.getRemoteDevice(savedMAC);
-//                                    try {
-//                                        openBluetoothPrinter();
-//                                        printData(editText.getText().toString());
-//                                    } catch (IOException e) {
-//                                        Log.e(TAG, "Error connecting to Bluetooth device", e);
-//                                        Toast.makeText(MainActivity.this, "Error connecting to Bluetooth device", Toast.LENGTH_LONG).show();
-//                                    }
-//                                } else {
-//                                    // Αν δεν υπάρχει αποθηκευμένη συσκευή, εμφανίζουμε τη λίστα
-//                                    selectBluetoothDevice();
-//                                }
-//                            }
+                if (isMyPOSDevice(MainActivity.this)) {
+                    // Εκτύπωση με myPOS SDK / Provider
+                    //startMyPOSPayment();
+                    printViaMyPOS(editText.getText().toString());
+                } else {
+                    // Εκτύπωση με Bluetooth
+                    if (!bluetoothAdapter.isEnabled()) {
+                                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+                            } else {
+                                String savedMAC = sharedPreferences.getString(PREF_KEY_MAC, null);
+                                if (savedMAC != null) {
+                                    // Αν υπάρχει αποθηκευμένη συσκευή, συνδεόμαστε σε αυτήν
+                                    bluetoothDevice = bluetoothAdapter.getRemoteDevice(savedMAC);
+                                    try {
+                                        openBluetoothPrinter();
+                                        printData(editText.getText().toString());
+                                    } catch (IOException e) {
+                                        Log.e(TAG, "Error connecting to Bluetooth device", e);
+                                        Toast.makeText(MainActivity.this, "Error connecting to Bluetooth device", Toast.LENGTH_LONG).show();
+                                    }
+                                } else {
+                                    // Αν δεν υπάρχει αποθηκευμένη συσκευή, εμφανίζουμε τη λίστα
+                                    selectBluetoothDevice();
+                                }
+                            }
                         }
-                    }
-                });
+//                MyPOSAPI.registerPOSInfo(MainActivity.this, new OnPOSInfoListener() {
+//                    @Override
+//                    public void onReceive(POSInfo info) {
+//                        if (info.getTID() != null && !info.getTID().isEmpty()) {
+//                            startMyPOSPayment();
+//                            // Είναι MyPOS -> Εκτυπώνουμε μέσω MyPOS API
+//                            //printViaMyPOS(editText.getText().toString());
+//                        } else {
+//                            printViaBluetooth();
+////                            if (!bluetoothAdapter.isEnabled()) {
+////                                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+////                                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+////                            } else {
+////                                String savedMAC = sharedPreferences.getString(PREF_KEY_MAC, null);
+////                                if (savedMAC != null) {
+////                                    // Αν υπάρχει αποθηκευμένη συσκευή, συνδεόμαστε σε αυτήν
+////                                    bluetoothDevice = bluetoothAdapter.getRemoteDevice(savedMAC);
+////                                    try {
+////                                        openBluetoothPrinter();
+////                                        printData(editText.getText().toString());
+////                                    } catch (IOException e) {
+////                                        Log.e(TAG, "Error connecting to Bluetooth device", e);
+////                                        Toast.makeText(MainActivity.this, "Error connecting to Bluetooth device", Toast.LENGTH_LONG).show();
+////                                    }
+////                                } else {
+////                                    // Αν δεν υπάρχει αποθηκευμένη συσκευή, εμφανίζουμε τη λίστα
+////                                    selectBluetoothDevice();
+////                                }
+////                            }
+//                        }
+//                    }
+//                });
 
             }
         });
@@ -255,7 +280,7 @@ public class MainActivity extends AppCompatActivity {
                 // Operator code. Maximum length: 4 characters
                 .operatorCode("1234")
                 // Reference number. Maximum length: 50 alpha numeric characters
-                .reference("asd123asd", ReferenceType.REFERENCE_NUMBER)
+                .reference(editText.getText().toString(), ReferenceType.REFERENCE_NUMBER)
                 // Enable fixed pinpad keyboard
                 .fixedPinpad(true)
                 // Enable mastercard and visa branding video
@@ -269,6 +294,12 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         MyPOSAPI.openPaymentActivity(MainActivity.this, payment, PAYMENT_REQUEST_CODE);
+    }
+
+    public boolean isMyPOSDevice(Context context) {
+        ProviderInfo provider = context.getPackageManager()
+                .resolveContentProvider("com.mypos.providers.POSInfoProvider", 0);
+        return provider != null;
     }
 
 
@@ -511,8 +542,4 @@ public class MainActivity extends AppCompatActivity {
             return null;
         }
     }
-
-
-
-
 }

@@ -9,25 +9,55 @@
         android:id="@+id/adminUserSpinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:spinnerMode="dropdown"
-        android:splitMotionEvents="false" />
+        android:layout_marginBottom="8dp"/>
 
-    <EditText
-        android:id="@+id/newPasswordEditText"
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/newUsernameLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:hint="New Password"
-        android:inputType="numberPassword"
-        android:textSize="20sp" />
+        android:layout_marginBottom="8dp"
+        android:visibility="gone">
 
-    <Button
-        android:id="@+id/saveButton"
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/newUsernameEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Νέο Όνομα Χρήστη"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="Save" />
+        android:layout_marginBottom="8dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/newPasswordEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Νέος Κωδικός"
+            android:inputType="numberPassword"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/saveButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Αποθήκευση" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/renameUserButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Μετανομασία" />
+    </LinearLayout>
 
     <TextView
         android:layout_width="wrap_content"

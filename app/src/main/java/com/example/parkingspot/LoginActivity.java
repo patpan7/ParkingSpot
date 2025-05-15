@@ -109,7 +109,7 @@ public class LoginActivity extends AppCompatActivity {
 
                     // Δημιουργία νέου χρήστη
                     String newUserName = "parking_" + nextParkingNumber;
-                    String newPassword = nextParkingNumber + "" + nextParkingNumber + ""; // Ή οποιοδήποτε άλλος τρόπος για τον κωδικό
+                    String newPassword = nextParkingNumber + "" + nextParkingNumber; // Ή οποιοδήποτε άλλος τρόπος για τον κωδικό
 
                     // Προσθήκη του νέου χρήστη και κωδικού στις ιδιότητες
                     properties.setProperty(newUserName, newPassword);
@@ -165,15 +165,34 @@ public class LoginActivity extends AppCompatActivity {
             }
         }
 
-        // Ταξινομεί τη λίστα χρησιμοποιώντας τον αριθμό του πάρκινγκ
+
         Collections.sort(parkingUsers, (user1, user2) -> {
-            // Παίρνει τον αριθμό του πάρκινγκ από τα ονόματα των χρηστών
-            int number1 = Integer.parseInt(user1.substring(8)); // Αφαιρεί το "parking_" και μετατρέπει σε αριθμό
-            int number2 = Integer.parseInt(user2.substring(8)); // Αφαιρεί το "parking_" και μετατρέπει σε αριθμό
-            return Integer.compare(number1, number2);
+            try {
+                String suffix1 = user1.substring(8);
+                String suffix2 = user2.substring(8);
+
+                int number1 = extractNumber(suffix1);
+                int number2 = extractNumber(suffix2);
+
+                return Integer.compare(number1, number2);
+            } catch (Exception e) {
+                return user1.compareTo(user2); // Fallback σε αλφαβητική ταξινόμηση
+            }
         });
 
         return parkingUsers;
+    }
+
+    private int extractNumber(String text) {
+        StringBuilder numberPart = new StringBuilder();
+        for (char c : text.toCharArray()) {
+            if (Character.isDigit(c)) {
+                numberPart.append(c);
+            } else {
+                break;
+            }
+        }
+        return numberPart.length() > 0 ? Integer.parseInt(numberPart.toString()) : 0;
     }
 
     private void loadProperties() {

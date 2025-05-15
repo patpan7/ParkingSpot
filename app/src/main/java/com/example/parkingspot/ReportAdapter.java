@@ -8,6 +8,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -27,6 +28,11 @@ public class ReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         } else {
             return TYPE_ITEM;
         }
+    }
+
+    public void updateData(List<Object> newReportList) {
+        this.reportList = new ArrayList<>(newReportList);
+        notifyDataSetChanged();
     }
 
     @NonNull
