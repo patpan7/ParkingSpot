@@ -143,13 +143,43 @@ public class AdminActivity extends AppCompatActivity {
 
     // Υπόλοιπες μέθοδοι
     private List<String> getAllParkingUsers() {
-        List<String> users = new ArrayList<>();
+        List<String> parkingUsers = new ArrayList<>();
+
+        // Επαναφέρει όλα τα κλειδιά (ονόματα χρηστών) από τις ιδιότητες
         for (String key : properties.stringPropertyNames()) {
-            if (key.startsWith("parking_")) users.add(key);
+            if (key.startsWith("parking_")) {
+                parkingUsers.add(key); // Προσθέτει το όνομα του χρήστη στη λίστα
+            }
         }
-        Collections.sort(users, (u1, u2) ->
-                Integer.compare(getUserNumber(u1), getUserNumber(u2)));
-        return users;
+
+
+        Collections.sort(parkingUsers, (user1, user2) -> {
+            try {
+                String suffix1 = user1.substring(8);
+                String suffix2 = user2.substring(8);
+
+                int number1 = extractNumber(suffix1);
+                int number2 = extractNumber(suffix2);
+
+                return Integer.compare(number1, number2);
+            } catch (Exception e) {
+                return user1.compareTo(user2); // Fallback σε αλφαβητική ταξινόμηση
+            }
+        });
+
+        return parkingUsers;
+    }
+
+    private int extractNumber(String text) {
+        StringBuilder numberPart = new StringBuilder();
+        for (char c : text.toCharArray()) {
+            if (Character.isDigit(c)) {
+                numberPart.append(c);
+            } else {
+                break;
+            }
+        }
+        return numberPart.length() > 0 ? Integer.parseInt(numberPart.toString()) : 0;
     }
 
     private int getUserNumber(String username) {
